@@ -183,6 +183,7 @@ async def show_courses(update: Update, context: ContextTypes.DEFAULT_TYPE, branc
     )
 
 # نمایش اطلاعات یک دوره (از طریق ارسال پیام آماده کانال)
+# نمایش اطلاعات یک دوره (از طریق ارسال پیام آماده کانال)
 async def show_course_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -197,14 +198,14 @@ async def show_course_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     title, description, price, link, branch_id = course
     
     try:
-        # متغیر message_id در اینجا همان لینک کامل دیتابیس است
-        link = str(message_id) 
+        # لینک مستقیماً از دیتابیس خوانده و فاصله‌های اضافیش حذف می‌شود
+        db_link = str(link).strip() 
         
         # استخراج اتوماتیک یوزرنیم کانال و شماره پیام از لینک
-        parts = link.split("/")
-        extracted_message_id = int(parts[-1])  # عدد آخر لینک (مثلاً 10)
-        extracted_channel = f"@{parts[-2]}"    # کلمه قبل از عدد (مثلاً @doctor_lead_poster)
-
+        parts = db_link.split("/")
+        extracted_message_id = int(parts[-1])  # عدد آخر لینک
+        extracted_channel = f"@{parts[-2]}"    # یوزرنیم کانال
+        
         await context.bot.copy_message(
             chat_id=update.effective_chat.id,
             from_chat_id=extracted_channel,
@@ -230,28 +231,9 @@ async def show_course_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
             chat_id=update.effective_chat.id,
             text="❌ متأسفانه در نمایش اطلاعات این دوره مشکلی پیش آمد. (لینک پیام نامعتبر است)"
         )
-        
-        # ارسال دکمه بازگشت در یک پیام کوچک زیر پیام اصلی
-        keyboard = [
-            [InlineKeyboardButton("بازگشت به دوره‌ها", callback_data=f"back_courses_{branch_id}")],
-            [InlineKeyboardButton("🏠 منوی اصلی", callback_data="main_menu")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text="👇 برای بازگشت به منو یا انتخاب دوره‌های دیگر، از دکمه‌های زیر استفاده کنید:",
-            reply_markup=reply_markup
-        )
-        
-    except Exception as e:
-        print(f"Error in show_course_info: {e}")
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text="❌ متأسفانه در نمایش اطلاعات این دوره مشکلی پیش آمد. (لینک پیام نامعتبر است)"
-        )
-        
-        # ---------- مدیریت انتخاب شاخه و بررسی عضویت ----------
+
+
+# ---------- مدیریت انتخاب شاخه و بررسی عضویت ----------
 async def branch_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -263,13 +245,13 @@ async def branch_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     channel_username = branch[2]
+    
+    # اگر کاربر عضو بود دوره‌ها را نشان بده، وگرنه دکمه‌های عضویت را بفرست
     if await is_member(update, context, channel_username):
-        # عضو هست → نمایش دوره‌ها
         await show_courses(update, context, branch_id)
     else:
-        # عضو نیست → درخواست عضویت
         keyboard = [
-            [InlineKeyboardButton("📢 عضویت در کانال", url=f"https://t.me/{channel_username.lstrip()}")],
+            [InlineKeyboardButton("📢 عضویت در کانال", url=f"https://t.me/{channel_username.lstrip('@')}")],
             [InlineKeyboardButton("✅ بررسی عضویت", callback_data=f"check_member_{branch_id}")],
             [InlineKeyboardButton("🔙 بازگشت", callback_data="main_menu")]
         ]
