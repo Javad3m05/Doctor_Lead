@@ -196,22 +196,39 @@ async def show_course_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     title, description, price, link, branch_id = course
     
-    try:
-        # استخراج آیدی کانال و آیدی پیام از لینک کانال
-        # مثال لینک: https://t.me/Denta_Lead/123
-        link_clean = link.strip()
-        link_parts = link_clean.split('/')
+try:
+        # متغیر message_id در اینجا همان لینک کامل دیتابیس است
+        link = str(message_id) 
         
-        # حذف مواردی مثل ?single در لینک‌های عکس‌دار
-        message_id_str = link_parts[-1].split('?')[0]
-        message_id = int(message_id_str)
-        channel_username = f"{link_parts[-2]}"
-        
-        # کپی کردن عین پیام (پوستر، متن، ایموجی پرمیوم و...) از کانال برای کاربر
+        # استخراج اتوماتیک یوزرنیم کانال و شماره پیام از لینک
+        parts = link.split("/")
+        extracted_message_id = int(parts[-1])  # عدد آخر لینک (مثلاً 10)
+        extracted_channel = f"@{parts[-2]}"    # کلمه قبل از عدد (مثلاً @doctor_lead_poster)
+
         await context.bot.copy_message(
             chat_id=update.effective_chat.id,
-            from_chat_id=channel_username,
-            message_id=message_id
+            from_chat_id=extracted_channel,
+            message_id=extracted_message_id
+        )
+        
+        # ارسال دکمه بازگشت در یک پیام کوچک زیر پیام اصلی
+        keyboard = [
+            [InlineKeyboardButton("بازگشت به دوره‌ها", callback_data=f"back_courses_{branch_id}")],
+            [InlineKeyboardButton("🏠 منوی اصلی", callback_data="main_menu")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="👇 برای بازگشت به منو یا انتخاب دوره‌های دیگر، از دکمه‌های زیر استفاده کنید:",
+            reply_markup=reply_markup
+        )
+        
+    except Exception as e:
+        print(f"Error in show_course_info: {e}")
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="❌ متأسفانه در نمایش اطلاعات این دوره مشکلی پیش آمد. (لینک پیام نامعتبر است)"
         )
         
         # ارسال دکمه بازگشت در یک پیام کوچک زیر پیام اصلی
