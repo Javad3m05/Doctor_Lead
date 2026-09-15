@@ -259,7 +259,7 @@ async def branch_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(
             f"⚠️ برای مشاهده دوره‌های {branch[1]}، ابتدا باید در کانال زیر عضو شوید:\n"
-            f"@{channel_username}\n\n"
+            f"{channel_username}\n\n"
             "پس از عضویت، دکمه «بررسی عضویت» را بزنید.",
             reply_markup=reply_markup
         )
