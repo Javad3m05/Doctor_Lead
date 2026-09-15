@@ -207,7 +207,7 @@ async def show_course_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # حذف مواردی مثل ?single در لینک‌های عکس‌دار
         message_id_str = link_parts[-1].split('?')[0]
         message_id = int(message_id_str)
-        channel_username = f"@{link_parts[-2]}"
+        channel_username = f"{link_parts[-2]}"
         
         # کپی کردن عین پیام (پوستر، متن، ایموجی پرمیوم و...) از کانال برای کاربر
         await context.bot.copy_message(
