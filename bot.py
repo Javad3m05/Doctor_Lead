@@ -5,7 +5,7 @@ from telegram.ext import Application, ApplicationBuilder, CommandHandler, Callba
 
 # لینک دیتابیس آنلاین خود را دقیقاً بین دو کوتیشن زیر قرار دهید
 DB_URL = "postgresql://drlead.db_owner:npg_TbZrXs6ikj0A@ep-floral-field-b1nacqbb-pooler.c-5.eu-central-1.aws.neon.tech/drlead.db?sslmode=require&channel_binding=require"
-BOT_TOKEN = "8895703525:AAGQhu5hgOA78qMxYYMsorXgnommp1vjH_U"
+BOT_TOKEN = "8895703525:AAFTwlrI4rnIUBNHLV4U0StzdJf4p8u2UUM"
 # اتصال به دیتابیس ابری
 conn = psycopg2.connect(DB_URL)
 conn.autocommit = True
