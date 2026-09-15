@@ -254,7 +254,7 @@ async def branch_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         # عضو نیست → درخواست عضویت
         keyboard = [
-            [InlineKeyboardButton("📢 عضویت در کانال", url=f"https://t.me/{channel_username.lstrip('@')}")],
+            [InlineKeyboardButton("📢 عضویت در کانال", url=f"https://t.me/{channel_username.lstrip()}")],
             [InlineKeyboardButton("✅ بررسی عضویت", callback_data=f"check_member_{branch_id}")],
             [InlineKeyboardButton("🔙 بازگشت", callback_data="main_menu")]
         ]
