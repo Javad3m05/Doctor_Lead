@@ -63,9 +63,9 @@ def get_branch(branch_id):
         if b_id == 1:
             channel_username = "@Denta_Lead"
         elif b_id == 2:
-            channel_username = "@Denta_Lead"  # اگر فارمالید کانال جدا دارد، اینجا تغییر دهید
+            channel_username = "@pharma_lead"  # اگر فارمالید کانال جدا دارد، اینجا تغییر دهید
         elif b_id == 3:
-            channel_username = "@Denta_Lead"  # اگر مدیکالید کانال جدا دارد، اینجا تغییر دهید
+            channel_username = "@medica_lead"  # اگر مدیکالید کانال جدا دارد، اینجا تغییر دهید
         else:
             channel_username = None
             
