@@ -128,9 +128,7 @@ def add_course(branch_id, title, description, price, link):
 async def is_member(update: Update, context: ContextTypes.DEFAULT_TYPE, channel_username: str) -> bool:
     user_id = update.effective_user.id
     
-    # اضافه کردن اتوماتیک @ به ابتدای آیدی
-    if not channel_username.startswith('@'):
-        channel_username = f"@{channel_username}"
+  
         
     print(f"\n--- در حال بررسی عضویت ---")
     print(f"آیدی عددی کاربر: {user_id}")
