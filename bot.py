@@ -196,7 +196,7 @@ async def show_course_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     title, description, price, link, branch_id = course
     
-try:
+    try:
         # متغیر message_id در اینجا همان لینک کامل دیتابیس است
         link = str(message_id) 
         
