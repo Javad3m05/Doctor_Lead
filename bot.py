@@ -212,16 +212,21 @@ async def show_course_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
             message_id=extracted_message_id
         )
         
-        # ارسال دکمه بازگشت در یک پیام کوچک زیر پیام اصلی
+# ارسال دکمه‌های بازگشت و پشتیبانی در یک پیام کوچک زیر پیام اصلی
         keyboard = [
+            [InlineKeyboardButton("💬 ارتباط با پشتیبانی", url="https://t.me/Pharmalead_support")],
             [InlineKeyboardButton("بازگشت به دوره‌ها", callback_data=f"back_courses_{branch_id}")],
             [InlineKeyboardButton("🏠 منوی اصلی", callback_data="main_menu")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
+# پیام راهنما به همراه دکمه‌های شیشه‌ای
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text="👇 برای بازگشت به منو یا انتخاب دوره‌های دیگر، از دکمه‌های زیر استفاده کنید:",
+            text=(
+                "📞 برای مشاوره، ارسال رسید پرداخت و اعلام نظرات، با پشتیبانی در ارتباط باشید.\n\n"
+                "👇 برای بازگشت به منو یا انتخاب دوره‌های دیگر، از دکمه‌های زیر استفاده کنید:"
+            ),
             reply_markup=reply_markup
         )
         
