@@ -1,39 +1,29 @@
+import os
 import asyncio
 import psycopg2
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
-
-# لینک دیتابیس آنلاین خود را دقیقاً بین دو کوتیشن زیر قرار دهید
-BOT_TOKEN = "8895703525:AAFTwlrI4rnIUBNHLV4U0StzdJf4p8u2UUM"
-
-from telegram.ext import MessageHandler, filters
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 import google.generativeai as genai
 
-# کدهای هوش مصنوعی
-import os
-import google.generativeai as genai
-
-# ربات کلید را از محیط امن می‌خواند، نه از داخل کد
+# خواندن اطلاعات محرمانه از گاوصندوق سرور
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 ADMIN_CHAT_ID = os.environ.get("ADMIN_CHAT_ID")
 DB_URL = os.environ.get("DATABASE_URL")
 
+# روشن کردن موتور هوش مصنوعی
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
     model = genai.GenerativeModel('gemini-1.5-flash')
-#---------------------------------------------------
+
 # بارگذاری کل دیتای کانال‌ها در حافظه ربات
 try:
     with open("knowledge.txt", "r", encoding="utf-8") as file:
         knowledge_base = file.read()
 except FileNotFoundError:
     knowledge_base = "اطلاعات پایگاه دانش هنوز اضافه نشده است."
-#-------------------------------------------------
 
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
-# اتصال به دیتابیس ابری
+#اتصال به دیتابیس ابری
 conn = psycopg2.connect(DB_URL)
 conn.autocommit = True
 cursor = conn.cursor()
@@ -402,7 +392,7 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
     wait_msg = await update.message.reply_text("🤖 در حال بررسی پیام شما...")
 
     try:
-prompt = f"""
+        prompt = f"""
         شما دستیار هوشمند و پشتیبانِ خطِ اولِ پلتفرم آموزشی «دکترلید» هستید.
         مخاطبان شما دندانپزشکان، داروسازان، پزشکان و دانشجویان علوم پزشکی هستند.
 
