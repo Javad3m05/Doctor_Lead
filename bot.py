@@ -381,6 +381,7 @@ async def admin_edit_course(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(f"خطا: {e}")
 #-------------------هوش مصنوعی-----------------------------
+#-------------------هوش مصنوعی-----------------------------
 async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # اگر پیام متنی نبود کاری انجام نده
     if not update.message or not update.message.text:
@@ -391,6 +392,11 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     wait_msg = await update.message.reply_text("🤖 در حال بررسی پیام شما...")
 
+    # بررسی اینکه آیا مدل جمنای اصلاً لود شده است یا خیر
+    if 'model' not in globals():
+        await wait_msg.edit_text("❌ خطا: کلید جمنای در استریم‌لیت لود نشده است. لطفاً بخش Secrets را چک کنید.")
+        return
+
     try:
         prompt = f"""
         شما دستیار هوشمند و پشتیبانِ خطِ اولِ پلتفرم آموزشی «دکترلید» هستید.
@@ -399,23 +405,26 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
         لحن و نحوه برخورد (قانون طلایی):
         شما باید همواره و در تمامی پاسخ‌ها، مخاطب را با عنوان «دکتر» خطاب کنید. لحن شما باید حرفه‌ای و محترمانه باشد.
 
-        اطلاعات پایگاه دانش (آرشیو کامل فعالیت‌ها و دوره‌های ما در تلگرام):
+        اطلاعات پایگاه دانش:
         {knowledge_base}
 
         قوانین پاسخگویی (بسیار مهم):
-        ۱. برای پاسخ به سوالاتِ مربوط به دوره‌ها، فقط از اطلاعات پایگاه دانش بالا استفاده کن.
-        ۲. اگر پیام کاربر شامل یکی از موارد زیر بود، حق دادن هیچ پاسخی نداری و باید فقط کلمه TRANSFER_TO_ADMIN را برگردانی:
-        - ارسال رسید پرداخت، فیش واریزی یا اسکرین‌شات.
-        - درخواست شماره کارت یا شماره شبا.
-        - پرسیدن سوالات تخصصی کلینیکال و درخواست مشاوره درمانی.
-        - گزارش مشکل فنی یا درخواست صحبت با ادمین.
+        ۱. فقط از اطلاعات پایگاه دانش استفاده کن.
+        ۲. اگر پیام کاربر شامل کلمات مالی، شماره کارت، رسید بانکی، سوال تخصصی کلینیکال بیمار یا مشکل فنی بود، فقط کلمه TRANSFER_TO_ADMIN را برگردان.
 
         متن پیام کاربر: {user_msg}
         """
         
-        response = model.generate_content(prompt).text.strip()
+        # استفاده از دستور async برای جلوگیری از قفل شدن ربات
+        response = await model.generate_content_async(prompt)
         
-        if "TRANSFER_TO_ADMIN" in response:
+        try:
+            final_text = response.text.strip()
+        except ValueError:
+            # اگر گوگل پیام را به دلایل امنیتی مسدود کند
+            final_text = "خطا: محتوای پیام توسط فیلترهای امنیتی جمنای مسدود شد."
+            
+        if "TRANSFER_TO_ADMIN" in final_text:
             await wait_msg.edit_text("⏳ درخواست شما نیاز به بررسی ادمین دارد. پیام شما برای پشتیبانی ارسال شد.")
             
             await context.bot.forward_message(
@@ -428,11 +437,13 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
                 text=f"👆 کاربر بالا با آیدی عددی {user_id} منتظر پاسخ شماست."
             )
         else:
-            await wait_msg.edit_text(response)
+            await wait_msg.edit_text(final_text)
             
     except Exception as e:
         print(f"AI Error: {e}")
-        await wait_msg.edit_text("❌ متأسفانه در ارتباط با سرور پشتیبانی مشکلی پیش آمد.")
+        # این خط ارور اصلی گوگل را مستقیماً در تلگرام به شما نشان می‌دهد
+        await wait_msg.edit_text(f"❌ خطای سرور گوگل:\n{str(e)}")
+#-------------------------------------------------
 #-------------------------------------------------
 # ==========================================
 # ۲. کد جدید (هندلر دکمه) را دقیقاً اینجا بگذارید:
