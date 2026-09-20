@@ -4,15 +4,23 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # لینک دیتابیس آنلاین خود را دقیقاً بین دو کوتیشن زیر قرار دهید
-DB_URL = "postgresql://drlead.db_owner:npg_TbZrXs6ikj0A@ep-floral-field-b1nacqbb-pooler.c-5.eu-central-1.aws.neon.tech/drlead.db?sslmode=require&channel_binding=require"
 BOT_TOKEN = "8895703525:AAFTwlrI4rnIUBNHLV4U0StzdJf4p8u2UUM"
 
 from telegram.ext import MessageHandler, filters
 import google.generativeai as genai
 
 # کدهای هوش مصنوعی
-GEMINI_API_KEY = "AQ.Ab8RN6Jop4Kn4FJSfCDXGzchH06rMwpJFhDmvqX_cjaJTYxXXQ"
-ADMIN_CHAT_ID = "1815467453"
+import os
+import google.generativeai as genai
+
+# ربات کلید را از محیط امن می‌خواند، نه از داخل کد
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+ADMIN_CHAT_ID = os.environ.get("ADMIN_CHAT_ID")
+DB_URL = os.environ.get("DATABASE_URL")
+
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-1.5-flash')
 #---------------------------------------------------
 # بارگذاری کل دیتای کانال‌ها در حافظه ربات
 try:
