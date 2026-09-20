@@ -11,7 +11,7 @@ from telegram.ext import MessageHandler, filters
 import google.generativeai as genai
 
 # کدهای هوش مصنوعی
-GEMINI_API_KEY = "AQ.Ab8RN6KuJK6xyb6vvsP7NN1AuzyTiYcGJWdjZw4l4-0a_t4Vcg"
+GEMINI_API_KEY = "AQ.Ab8RN6Jop4Kn4FJSfCDXGzchH06rMwpJFhDmvqX_cjaJTYxXXQ"
 ADMIN_CHAT_ID = "1815467453"
 #---------------------------------------------------
 # بارگذاری کل دیتای کانال‌ها در حافظه ربات
