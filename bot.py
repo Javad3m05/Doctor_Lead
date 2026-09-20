@@ -459,7 +459,27 @@ async def support_button_click(update: Update, context: ContextTypes.DEFAULT_TYP
         "👇 لطفاً سوال، درخواست یا مشکل خود را همینجا تایپ کنید.\n"
         "دستیار هوشمند ما در کمتر از چند ثانیه پاسخ خواهد داد:"
     )
-
+#----------------------------
+async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.chat_id
+    
+    # ۱. ارسال آیدی ادمین به کاربر
+    await update.message.reply_text(
+        "📸 تصویر شما دریافت شد.\n\n"
+        "برای بررسی فیش‌های واریزی، تصاویر پزشکی و پیگیری درخواست‌ها، لطفاً مستقیماً به پی‌وی ادمین پیام دهید:\n"
+        "👉 @pharmalead_support"
+    )
+    
+    # ۲. فوروارد کردن اتوماتیک عکس برای شما (ادمین)
+    await context.bot.forward_message(
+        chat_id=ADMIN_CHAT_ID, 
+        from_chat_id=user_id, 
+        message_id=update.message.message_id
+    )
+    await context.bot.send_message(
+        chat_id=ADMIN_CHAT_ID,
+        text=f"👆 کاربر بالا با آیدی عددی {user_id} این تصویر را ارسال کرد."
+    )
 # ---------- اجرای ربات ----------
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
