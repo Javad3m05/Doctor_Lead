@@ -3,7 +3,9 @@ import asyncio
 import psycopg2
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
-import google.generativeai as genai
+
+# ایمپورت کتابخانه جدید گوگل
+from google import genai
 
 # خواندن اطلاعات محرمانه از گاوصندوق سرور
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
@@ -11,10 +13,9 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 ADMIN_CHAT_ID = os.environ.get("ADMIN_CHAT_ID")
 DB_URL = os.environ.get("DATABASE_URL")
 
-# روشن کردن موتور هوش مصنوعی
+# روشن کردن موتور هوش مصنوعی با ساختار جدید
 if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
 # بارگذاری کل دیتای کانال‌ها در حافظه ربات
 try:
@@ -382,6 +383,7 @@ async def admin_edit_course(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"خطا: {e}")
 #-------------------هوش مصنوعی-----------------------------
 #-------------------هوش مصنوعی-----------------------------
+#-------------------هوش مصنوعی-----------------------------
 async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # اگر پیام متنی نبود کاری انجام نده
     if not update.message or not update.message.text:
@@ -392,9 +394,9 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     wait_msg = await update.message.reply_text("🤖 در حال بررسی پیام شما...")
 
-    # بررسی اینکه آیا مدل جمنای اصلاً لود شده است یا خیر
-    if 'model' not in globals():
-        await wait_msg.edit_text("❌ خطا: کلید جمنای در استریم‌لیت لود نشده است. لطفاً بخش Secrets را چک کنید.")
+    # بررسی لود شدن کلاینت جدید
+    if 'client' not in globals():
+        await wait_msg.edit_text("❌ خطا: کلید جمنای لود نشده است.")
         return
 
     try:
@@ -415,14 +417,16 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
         متن پیام کاربر: {user_msg}
         """
         
-        # استفاده از دستور async برای جلوگیری از قفل شدن ربات
-        response = await model.generate_content_async(prompt)
+        # درخواست جواب با استفاده از کتابخانه جدید گوگل (نسخه غیرهمزمان)
+        response = await client.aio.models.generate_content(
+            model='gemini-1.5-flash',
+            contents=prompt
+        )
         
         try:
             final_text = response.text.strip()
         except ValueError:
-            # اگر گوگل پیام را به دلایل امنیتی مسدود کند
-            final_text = "خطا: محتوای پیام توسط فیلترهای امنیتی جمنای مسدود شد."
+            final_text = "خطا: محتوای پیام توسط فیلترهای امنیتی مسدود شد."
             
         if "TRANSFER_TO_ADMIN" in final_text:
             await wait_msg.edit_text("⏳ درخواست شما نیاز به بررسی ادمین دارد. پیام شما برای پشتیبانی ارسال شد.")
@@ -441,8 +445,8 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
             
     except Exception as e:
         print(f"AI Error: {e}")
-        # این خط ارور اصلی گوگل را مستقیماً در تلگرام به شما نشان می‌دهد
         await wait_msg.edit_text(f"❌ خطای سرور گوگل:\n{str(e)}")
+#-------------------------------------------------
 #-------------------------------------------------
 #-------------------------------------------------
 # ==========================================
