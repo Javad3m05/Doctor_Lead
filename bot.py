@@ -6,6 +6,17 @@ from telegram.ext import Application, ApplicationBuilder, CommandHandler, Callba
 # لینک دیتابیس آنلاین خود را دقیقاً بین دو کوتیشن زیر قرار دهید
 DB_URL = "postgresql://drlead.db_owner:npg_TbZrXs6ikj0A@ep-floral-field-b1nacqbb-pooler.c-5.eu-central-1.aws.neon.tech/drlead.db?sslmode=require&channel_binding=require"
 BOT_TOKEN = "8895703525:AAFTwlrI4rnIUBNHLV4U0StzdJf4p8u2UUM"
+
+from telegram.ext import MessageHandler, filters
+import google.generativeai as genai
+
+# کدهای هوش مصنوعی
+GEMINI_API_KEY = "AQ.Ab8RN6KuJK6xyb6vvsP7NN1AuzyTiYcGJWdjZw4l4-0a_t4Vcg"
+ADMIN_CHAT_ID = "1815467453" 
+
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-1.5-flash')
 # اتصال به دیتابیس ابری
 conn = psycopg2.connect(DB_URL)
 conn.autocommit = True
@@ -213,8 +224,9 @@ async def show_course_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         
 # ارسال دکمه‌های بازگشت و پشتیبانی در یک پیام کوچک زیر پیام اصلی
+# ارسال دکمه بازگشت و پشتیبانی در یک پیام کوچک زیر پیام اصلی
         keyboard = [
-            [InlineKeyboardButton("💬 ارتباط با پشتیبانی", url="https://t.me/Pharmalead_support")],
+            [InlineKeyboardButton("💬 ارسال پیام به پشتیبانی", callback_data="ai_support_click")],
             [InlineKeyboardButton("بازگشت به دوره‌ها", callback_data=f"back_courses_{branch_id}")],
             [InlineKeyboardButton("🏠 منوی اصلی", callback_data="main_menu")]
         ]
@@ -362,6 +374,59 @@ async def admin_edit_course(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"✅ دوره شماره {course_id} با موفقیت ویرایش شد.")
     except Exception as e:
         await update.message.reply_text(f"خطا: {e}")
+#-------------------هوش مصنوعی-----------------------------
+async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # اگر پیام متنی نبود کاری انجام نده
+    if not update.message or not update.message.text:
+        return
+        
+    user_msg = update.message.text
+    user_id = update.message.chat_id
+    
+    wait_msg = await update.message.reply_text("🤖 در حال بررسی پیام شما...")
+
+    try:
+        prompt = f"""
+        شما پشتیبان مهربان و هوشمند ربات آموزشی دکترلید هستید.
+        قوانین:
+        ۱. اگر سوال ساده بود، دوستانه جواب بده.
+        ۲. اگر تخصصی بود، مربوط به واریز بود، یا درخواست انسان بود فقط بگو TRANSFER_TO_ADMIN.
+        
+        متن پیام کاربر: {user_msg}
+        """
+        
+        response = model.generate_content(prompt).text.strip()
+        
+        if "TRANSFER_TO_ADMIN" in response:
+            await wait_msg.edit_text("⏳ درخواست شما نیاز به بررسی ادمین دارد. پیام شما برای پشتیبانی ارسال شد.")
+            
+            await context.bot.forward_message(
+                chat_id=ADMIN_CHAT_ID, 
+                from_chat_id=user_id, 
+                message_id=update.message.message_id
+            )
+            await context.bot.send_message(
+                chat_id=ADMIN_CHAT_ID,
+                text=f"👆 کاربر بالا با آیدی عددی {user_id} منتظر پاسخ شماست."
+            )
+        else:
+            await wait_msg.edit_text(response)
+            
+    except Exception as e:
+        print(f"AI Error: {e}")
+        await wait_msg.edit_text("❌ متأسفانه در ارتباط با سرور پشتیبانی مشکلی پیش آمد.")
+#-------------------------------------------------
+# ==========================================
+# ۲. کد جدید (هندلر دکمه) را دقیقاً اینجا بگذارید:
+async def support_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer() 
+    
+    await query.message.reply_text(
+        "👇 لطفاً سوال، درخواست یا مشکل خود را همینجا تایپ کنید.\n"
+        "دستیار هوشمند ما در کمتر از چند ثانیه پاسخ خواهد داد:"
+    )
+
 # ---------- اجرای ربات ----------
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
@@ -377,7 +442,13 @@ def main():
     app.add_handler(CallbackQueryHandler(show_course_info, pattern="^course_"))
     app.add_handler(CallbackQueryHandler(back_to_courses, pattern="^back_courses_"))
     app.add_handler(CallbackQueryHandler(back_to_main, pattern="^main_menu$"))
+    
+    # 👈 هندلر دکمه جدید پشتیبانی (این خط اضافه شد)
+    app.add_handler(CallbackQueryHandler(support_button_click, pattern="^ai_support_click$"))
 
+#----------------------------------هوش مصنوعی------------------------------------------------
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_user_message))
+    
     print("🤖 ربات دکترلید در حال اجرا...")
     app.run_polling()
 
