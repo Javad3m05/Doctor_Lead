@@ -419,7 +419,7 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
         
         # درخواست جواب با استفاده از کتابخانه جدید گوگل (نسخه غیرهمزمان)
         response = await client.aio.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-3.6-flash',
             contents=prompt
         )
         
