@@ -501,6 +501,7 @@ def main():
 
 #----------------------------------هوش مصنوعی------------------------------------------------
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_user_message))
+    app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
     
     print("🤖 ربات دکترلید در حال اجرا...")
     app.run_polling()
