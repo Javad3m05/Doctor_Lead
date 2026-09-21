@@ -423,13 +423,22 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
             contents=prompt
         )
         
-        try:
+try:
             final_text = response.text.strip()
         except ValueError:
             final_text = "خطا: محتوای پیام توسط فیلترهای امنیتی مسدود شد."
             
+        # ساخت دکمه بازگشت به منوی اصلی
+        keyboard = [
+            [InlineKeyboardButton("🏠 بازگشت به منوی اصلی", callback_data="main_menu")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+            
         if "TRANSFER_TO_ADMIN" in final_text:
-            await wait_msg.edit_text("⏳ درخواست شما نیاز به بررسی ادمین دارد. پیام شما برای پشتیبانی ارسال شد.")
+            await wait_msg.edit_text(
+                "⏳ درخواست شما نیاز به بررسی ادمین دارد. پیام شما برای پشتیبانی ارسال شد.",
+                reply_markup=reply_markup
+            )
             
             await context.bot.forward_message(
                 chat_id=ADMIN_CHAT_ID, 
@@ -441,11 +450,14 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
                 text=f"👆 کاربر بالا با آیدی عددی {user_id} منتظر پاسخ شماست."
             )
         else:
-            await wait_msg.edit_text(final_text)
+            # ارسال جواب هوش مصنوعی به همراه دکمه بازگشت
+            await wait_msg.edit_text(final_text, reply_markup=reply_markup)
             
     except Exception as e:
         print(f"AI Error: {e}")
-        await wait_msg.edit_text(f"❌ خطای سرور گوگل:\n{str(e)}")
+        # ارسال ارور به همراه دکمه بازگشت برای جلوگیری از گیر کردن کاربر
+        error_keyboard = [[InlineKeyboardButton("🏠 بازگشت به منوی اصلی", callback_data="main_menu")]]
+        await wait_msg.edit_text(f"❌ خطای سرور گوگل:\n{str(e)}", reply_markup=InlineKeyboardMarkup(error_keyboard))
 #-------------------------------------------------
 #-------------------------------------------------
 #-------------------------------------------------
