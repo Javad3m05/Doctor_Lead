@@ -457,9 +457,21 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
                 from_chat_id=user_id, 
                 message_id=update.message.message_id
             )
+# --- کدهای جدید برای ایجاد لینک مستقیم ارتباط با کاربر ---
+            user = update.message.from_user
+            user_name = user.first_name if user.first_name else "کاربر"
+            
+            # بررسی اینکه آیا کاربر آیدی دارد یا خیر
+            if user.username:
+                contact_link = f"@{user.username}"
+            else:
+                # ساخت لینک آبی‌رنگ برای کسانی که آیدی ندارند
+                contact_link = f"<a href='tg://user?id={user_id}'>{user_name}</a>"
+                
             await context.bot.send_message(
                 chat_id=ADMIN_CHAT_ID,
-                text=f"👆 کاربر بالا با آیدی عددی {user_id} منتظر پاسخ شماست."
+                text=f"👆 کاربر بالا منتظر پاسخ شماست.\n🔗 برای چت با کاربر کلیک کنید: {contact_link}",
+                parse_mode="HTML" # این خط برای آبی و لینک شدن متن ضروری است
             )
         else:
             await wait_msg.edit_text(final_text, reply_markup=InlineKeyboardMarkup(standard_keyboard))
@@ -504,9 +516,21 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         from_chat_id=user_id, 
         message_id=update.message.message_id
     )
-    await context.bot.send_message(
-        chat_id=ADMIN_CHAT_ID,
-        text=f"👆 کاربر بالا با آیدی عددی {user_id} این تصویر را ارسال کرد."
+# --- کدهای جدید برای ایجاد لینک مستقیم ارتباط با کاربر ---
+            user = update.message.from_user
+            user_name = user.first_name if user.first_name else "کاربر"
+            
+            # بررسی اینکه آیا کاربر آیدی دارد یا خیر
+            if user.username:
+                contact_link = f"@{user.username}"
+            else:
+                # ساخت لینک آبی‌رنگ برای کسانی که آیدی ندارند
+                contact_link = f"<a href='tg://user?id={user_id}'>{user_name}</a>"
+                
+            await context.bot.send_message(
+                chat_id=ADMIN_CHAT_ID,
+                text=f"👆 کاربر بالا منتظر پاسخ شماست.\n🔗 برای چت با کاربر کلیک کنید: {contact_link}",
+                parse_mode="HTML" # این خط برای آبی و لینک شدن متن ضروری است
     )
 # ---------- اجرای ربات ----------
 def main():
