@@ -6,6 +6,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Mess
 
 # ایمپورت کتابخانه جدید گوگل
 from google import genai
+from google.genai import types
 
 # خواندن اطلاعات محرمانه از گاوصندوق سرور
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
@@ -503,36 +504,97 @@ async def support_button_click(update: Update, context: ContextTypes.DEFAULT_TYP
     )
 #----------------------------
 #-------------------دریافت عکس-----------------------------
+#-------------------دریافت عکس و پردازش بینایی-----------------------------
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.chat_id
-    
-    await update.message.reply_text(
-        "📸 تصویر شما دریافت شد.\n\n"
-        "برای بررسی فیش‌های واریزی، تصاویر پزشکی و پیگیری درخواست‌ها، لطفاً مستقیماً به پی‌وی ادمین پیام دهید:\n"
-        "👉 @pharmalead_support"
-    )
-    
-    # فوروارد پیام اصلی کاربر
-    await context.bot.forward_message(
-        chat_id=ADMIN_CHAT_ID, 
-        from_chat_id=user_id, 
-        message_id=update.message.message_id
-    )
-    
-    # ایجاد لینک مستقیم ارتباط با کاربر
     user = update.message.from_user
     user_name = user.first_name if user.first_name else "کاربر"
+    branch_id = context.user_data.get('current_branch', 1)
     
-    if user.username:
-        contact_link = f"@{user.username}"
-    else:
-        contact_link = f"<a href='tg://user?id={user_id}'>{user_name}</a>"
+    wait_msg = await update.message.reply_text("🤖 در حال اسکن و پردازش تصویر...")
+
+    if 'client' not in globals():
+        await wait_msg.edit_text("❌ خطا: کلید جمنای لود نشده است.")
+        return
+
+    try:
+        # ۱. دانلود عکس در حافظه موقت (گرفتن بالاترین کیفیت عکس ارسالی)
+        photo_file = await context.bot.get_file(update.message.photo[-1].file_id)
+        photo_bytes = await photo_file.download_as_bytearray()
         
-    await context.bot.send_message(
-        chat_id=ADMIN_CHAT_ID,
-        text=f"👆 کاربر بالا منتظر پاسخ شماست.\n🔗 برای چت با کاربر کلیک کنید: {contact_link}",
-        parse_mode="HTML"
-    )
+        # ۲. دستورات بینایی ماشین به جمنای
+        prompt = f"""
+        شما دستیار هوشمند «دکترلید» هستید. یک تصویر از کاربر دریافت کرده‌اید.
+        مخاطبان شما دندانپزشکان، داروسازان و پزشکان هستند (همیشه آنها را "دکتر" خطاب کنید).
+
+        قوانین پردازش تصویر:
+        ۱. فیش بانکی: اگر تصویر فیش واریزی، رسید بانکی، عکس کارت به کارت یا صفحه پرداخت است، فقط و فقط کلمه RECEIPT را برگردان.
+        ۲. تصویر علمی/پزشکی: اگر تصویر نسخه پزشکی، جواب آزمایش، سوال دارویی یا یک کیس کلینیکال است، با دقت آن را تحلیل کن و به صورت علمی بر اساس پایگاه دانش پاسخ بده. 
+        ۳. ارجاع تخصصی: اگر سوال پزشکی در تصویر خارج از دانش شماست یا نیاز به مداخله قطعی ادمین دارد، فقط کلمه TRANSFER_TO_ADMIN را برگردان.
+        ۴. تصاویر بی‌ربط: اگر تصویر کاملاً بی‌ربط به فضای پزشکی و آموزشی است (مثلا عکس طبیعت یا خودرو)، محترمانه با کمی طنز توضیح بده که شما فقط برای پشتیبانی آموزشی و پزشکی طراحی شده‌اید.
+
+        اطلاعات پایگاه دانش:
+        {knowledge_base}
+        """
+        
+        # ۳. ارسال همزمان عکس و دستورات به سرور گوگل
+        response = await client.aio.models.generate_content(
+            model='gemini-3.6-flash',
+            contents=[
+                prompt,
+                types.Part.from_bytes(data=bytes(photo_bytes), mime_type='image/jpeg')
+            ]
+        )
+        
+        final_text = response.text.strip()
+        
+        # ۴. تصمیم‌گیری بر اساس جواب هوش مصنوعی
+        if "RECEIPT" in final_text or "TRANSFER_TO_ADMIN" in final_text:
+            
+            if "RECEIPT" in final_text:
+                user_reply = "✅ فیش واریزی شما با موفقیت اسکن و برای تایید به ادمین ارسال شد.\nلطفاً تا زمان بررسی شکیبا باشید."
+            else:
+                user_reply = "⏳ تصویر شما نیاز به بررسی تخصصی ادمین دارد و برای پشتیبانی ارسال شد."
+                
+            admin_keyboard = [
+                [InlineKeyboardButton("💬 چت مستقیم با پشتیبانی", url="https://t.me/pharmalead_support")],
+                [InlineKeyboardButton("🏠 بازگشت به منوی اصلی", callback_data="main_menu")]
+            ]
+            
+            await wait_msg.edit_text(user_reply, reply_markup=InlineKeyboardMarkup(admin_keyboard))
+            
+            # فوروارد عکس برای ادمین
+            await context.bot.forward_message(
+                chat_id=ADMIN_CHAT_ID, 
+                from_chat_id=user_id, 
+                message_id=update.message.message_id
+            )
+            
+            # ساخت لینک مستقیم ارتباط با کاربر
+            if user.username:
+                contact_link = f"@{user.username}"
+            else:
+                contact_link = f"<a href='tg://user?id={user_id}'>{user_name}</a>"
+                
+            await context.bot.send_message(
+                chat_id=ADMIN_CHAT_ID,
+                text=f"👆 تصویر بالا از طرف کاربر ارسال شد.\n🔗 برای چت با کاربر کلیک کنید: {contact_link}",
+                parse_mode="HTML"
+            )
+            
+        else:
+            # پاسخگویی مستقیم هوش مصنوعی به تصاویر علمی یا نامربوط
+            standard_keyboard = [
+                [InlineKeyboardButton("📚 بازگشت به دوره‌ها", callback_data=f"back_courses_{branch_id}")],
+                [InlineKeyboardButton("🏠 بازگشت به منوی اصلی", callback_data="main_menu")]
+            ]
+            await wait_msg.edit_text(final_text, reply_markup=InlineKeyboardMarkup(standard_keyboard))
+            
+    except Exception as e:
+        print(f"AI Vision Error: {e}")
+        error_keyboard = [[InlineKeyboardButton("🏠 بازگشت به منوی اصلی", callback_data="main_menu")]]
+        await wait_msg.edit_text("❌ خطایی در اسکن تصویر رخ داد. لطفاً دوباره تلاش کنید.", reply_markup=InlineKeyboardMarkup(error_keyboard))
+#-------------------------------------------------
 #-------------------------------------------------
 # ---------- اجرای ربات ----------
 def main():
