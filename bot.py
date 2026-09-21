@@ -182,6 +182,8 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ---------- نمایش دوره‌های یک شاخه ----------
 async def show_courses(update: Update, context: ContextTypes.DEFAULT_TYPE, branch_id: int):
+    # این خط اضافه می‌شود تا ربات شاخه فعلی را در حافظه کاربر ذخیره کند
+    context.user_data['current_branch'] = branch_id
     branch = get_branch(branch_id)
     if not branch:
         await update.callback_query.answer("خطا: شاخه یافت نشد.")
@@ -385,17 +387,19 @@ async def admin_edit_course(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #-------------------هوش مصنوعی-----------------------------
 #-------------------هوش مصنوعی-----------------------------
 #-------------------هوش مصنوعی-----------------------------
+#-------------------هوش مصنوعی-----------------------------
+#-------------------هوش مصنوعی-----------------------------
 async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # اگر پیام متنی نبود کاری انجام نده
     if not update.message or not update.message.text:
         return
         
     user_msg = update.message.text
     user_id = update.message.chat_id
     
+    branch_id = context.user_data.get('current_branch', 1)
+    
     wait_msg = await update.message.reply_text("🤖 در حال بررسی پیام شما...")
 
-    # بررسی لود شدن کلاینت جدید
     if 'client' not in globals():
         await wait_msg.edit_text("❌ خطا: کلید جمنای لود نشده است.")
         return
@@ -418,7 +422,6 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
         متن پیام کاربر: {user_msg}
         """
         
-        # درخواست جواب با استفاده از مدل 3.6 فلش
         response = await client.aio.models.generate_content(
             model='gemini-3.6-flash',
             contents=prompt
@@ -429,16 +432,24 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
         except ValueError:
             final_text = "خطا: محتوای پیام توسط فیلترهای امنیتی مسدود شد."
             
-        # ساخت دکمه بازگشت به منوی اصلی
-        keyboard = [
+        # دکمه‌های استاندارد برای پاسخ‌های معمولی هوش مصنوعی
+        standard_keyboard = [
+            [InlineKeyboardButton("📚 بازگشت به دوره‌ها", callback_data=f"back_courses_{branch_id}")],
             [InlineKeyboardButton("🏠 بازگشت به منوی اصلی", callback_data="main_menu")]
         ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
             
         if "TRANSFER_TO_ADMIN" in final_text:
+            # کیبورد اختصاصی زمان ارجاع به ادمین (شامل لینک مستقیم پی‌وی)
+            admin_keyboard = [
+                [InlineKeyboardButton("💬 چت مستقیم با پشتیبانی", url="https://t.me/pharmalead_support")],
+                [InlineKeyboardButton("📚 بازگشت به دوره‌ها", callback_data=f"back_courses_{branch_id}")],
+                [InlineKeyboardButton("🏠 بازگشت به منوی اصلی", callback_data="main_menu")]
+            ]
+            
             await wait_msg.edit_text(
-                "⏳ درخواست شما نیاز به بررسی ادمین دارد. پیام شما برای پشتیبانی ارسال شد.",
-                reply_markup=reply_markup
+                "⏳ درخواست شما نیاز به بررسی ادمین دارد. پیام شما برای پشتیبانی ارسال شد.\n\n"
+                "👇 همچنین می‌توانید از طریق دکمه زیر مستقیماً با ادمین در ارتباط باشید:",
+                reply_markup=InlineKeyboardMarkup(admin_keyboard)
             )
             
             await context.bot.forward_message(
@@ -451,13 +462,17 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
                 text=f"👆 کاربر بالا با آیدی عددی {user_id} منتظر پاسخ شماست."
             )
         else:
-            # ارسال جواب هوش مصنوعی به همراه دکمه بازگشت
-            await wait_msg.edit_text(final_text, reply_markup=reply_markup)
+            await wait_msg.edit_text(final_text, reply_markup=InlineKeyboardMarkup(standard_keyboard))
             
     except Exception as e:
         print(f"AI Error: {e}")
-        error_keyboard = [[InlineKeyboardButton("🏠 بازگشت به منوی اصلی", callback_data="main_menu")]]
+        error_keyboard = [
+            [InlineKeyboardButton("📚 بازگشت به دوره‌ها", callback_data=f"back_courses_{branch_id}")],
+            [InlineKeyboardButton("🏠 بازگشت به منوی اصلی", callback_data="main_menu")]
+        ]
         await wait_msg.edit_text(f"❌ خطای سرور گوگل:\n{str(e)}", reply_markup=InlineKeyboardMarkup(error_keyboard))
+#-------------------------------------------------
+#-------------------------------------------------
 #-------------------------------------------------
 #-------------------------------------------------
 #-------------------------------------------------
