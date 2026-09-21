@@ -389,6 +389,7 @@ async def admin_edit_course(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #-------------------هوش مصنوعی-----------------------------
 #-------------------هوش مصنوعی-----------------------------
 #-------------------هوش مصنوعی-----------------------------
+#-------------------هوش مصنوعی-----------------------------
 async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message or not update.message.text:
         return
@@ -452,26 +453,26 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
                 reply_markup=InlineKeyboardMarkup(admin_keyboard)
             )
             
+            # فوروارد پیام اصلی کاربر
             await context.bot.forward_message(
                 chat_id=ADMIN_CHAT_ID, 
                 from_chat_id=user_id, 
                 message_id=update.message.message_id
             )
-# --- کدهای جدید برای ایجاد لینک مستقیم ارتباط با کاربر ---
+            
+            # ایجاد لینک مستقیم ارتباط با کاربر
             user = update.message.from_user
             user_name = user.first_name if user.first_name else "کاربر"
             
-            # بررسی اینکه آیا کاربر آیدی دارد یا خیر
             if user.username:
                 contact_link = f"@{user.username}"
             else:
-                # ساخت لینک آبی‌رنگ برای کسانی که آیدی ندارند
                 contact_link = f"<a href='tg://user?id={user_id}'>{user_name}</a>"
                 
             await context.bot.send_message(
                 chat_id=ADMIN_CHAT_ID,
                 text=f"👆 کاربر بالا منتظر پاسخ شماست.\n🔗 برای چت با کاربر کلیک کنید: {contact_link}",
-                parse_mode="HTML" # این خط برای آبی و لینک شدن متن ضروری است
+                parse_mode="HTML"
             )
         else:
             await wait_msg.edit_text(final_text, reply_markup=InlineKeyboardMarkup(standard_keyboard))
@@ -489,6 +490,7 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
 #-------------------------------------------------
 #-------------------------------------------------
 #-------------------------------------------------
+#-------------------------------------------------
 # ==========================================
 # ۲. کد جدید (هندلر دکمه) را دقیقاً اینجا بگذارید:
 async def support_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -500,38 +502,38 @@ async def support_button_click(update: Update, context: ContextTypes.DEFAULT_TYP
         "دستیار هوشمند ما در کمتر از چند ثانیه پاسخ خواهد داد:"
     )
 #----------------------------
+#-------------------دریافت عکس-----------------------------
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.chat_id
     
-    # ۱. ارسال آیدی ادمین به کاربر
     await update.message.reply_text(
         "📸 تصویر شما دریافت شد.\n\n"
         "برای بررسی فیش‌های واریزی، تصاویر پزشکی و پیگیری درخواست‌ها، لطفاً مستقیماً به پی‌وی ادمین پیام دهید:\n"
         "👉 @pharmalead_support"
     )
     
-    # ۲. فوروارد کردن اتوماتیک عکس برای شما (ادمین)
+    # فوروارد پیام اصلی کاربر
     await context.bot.forward_message(
         chat_id=ADMIN_CHAT_ID, 
         from_chat_id=user_id, 
         message_id=update.message.message_id
     )
-# --- کدهای جدید برای ایجاد لینک مستقیم ارتباط با کاربر ---
-            user = update.message.from_user
-            user_name = user.first_name if user.first_name else "کاربر"
-            
-            # بررسی اینکه آیا کاربر آیدی دارد یا خیر
-            if user.username:
-                contact_link = f"@{user.username}"
-            else:
-                # ساخت لینک آبی‌رنگ برای کسانی که آیدی ندارند
-                contact_link = f"<a href='tg://user?id={user_id}'>{user_name}</a>"
-                
-            await context.bot.send_message(
-                chat_id=ADMIN_CHAT_ID,
-                text=f"👆 کاربر بالا منتظر پاسخ شماست.\n🔗 برای چت با کاربر کلیک کنید: {contact_link}",
-                parse_mode="HTML" # این خط برای آبی و لینک شدن متن ضروری است
+    
+    # ایجاد لینک مستقیم ارتباط با کاربر
+    user = update.message.from_user
+    user_name = user.first_name if user.first_name else "کاربر"
+    
+    if user.username:
+        contact_link = f"@{user.username}"
+    else:
+        contact_link = f"<a href='tg://user?id={user_id}'>{user_name}</a>"
+        
+    await context.bot.send_message(
+        chat_id=ADMIN_CHAT_ID,
+        text=f"👆 کاربر بالا منتظر پاسخ شماست.\n🔗 برای چت با کاربر کلیک کنید: {contact_link}",
+        parse_mode="HTML"
     )
+#-------------------------------------------------
 # ---------- اجرای ربات ----------
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
