@@ -384,6 +384,7 @@ async def admin_edit_course(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #-------------------هوش مصنوعی-----------------------------
 #-------------------هوش مصنوعی-----------------------------
 #-------------------هوش مصنوعی-----------------------------
+#-------------------هوش مصنوعی-----------------------------
 async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # اگر پیام متنی نبود کاری انجام نده
     if not update.message or not update.message.text:
@@ -405,7 +406,7 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
         مخاطبان شما دندانپزشکان، داروسازان، پزشکان و دانشجویان علوم پزشکی هستند.
 
         لحن و نحوه برخورد (قانون طلایی):
-          شما باید همواره و در تمامی پاسخ‌ها، مخاطب را با عنوان «دکتر» خطاب کنید. لحن شما باید حرفه‌ای و محترمانه و صمیمی و در عین حال و با لحن گفتاری باشد. اگر امکانش بود از ایموجی ها استفاده کن . 
+        شما باید همواره و در تمامی پاسخ‌ها، مخاطب را با عنوان «دکتر» خطاب کنید. لحن شما باید حرفه‌ای و محترمانه باشد.
 
         اطلاعات پایگاه دانش:
         {knowledge_base}
@@ -417,13 +418,13 @@ async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE
         متن پیام کاربر: {user_msg}
         """
         
-        # درخواست جواب با استفاده از کتابخانه جدید گوگل (نسخه غیرهمزمان)
+        # درخواست جواب با استفاده از مدل 3.6 فلش
         response = await client.aio.models.generate_content(
             model='gemini-3.6-flash',
             contents=prompt
         )
         
-try:
+        try:
             final_text = response.text.strip()
         except ValueError:
             final_text = "خطا: محتوای پیام توسط فیلترهای امنیتی مسدود شد."
@@ -455,9 +456,9 @@ try:
             
     except Exception as e:
         print(f"AI Error: {e}")
-        # ارسال ارور به همراه دکمه بازگشت برای جلوگیری از گیر کردن کاربر
         error_keyboard = [[InlineKeyboardButton("🏠 بازگشت به منوی اصلی", callback_data="main_menu")]]
         await wait_msg.edit_text(f"❌ خطای سرور گوگل:\n{str(e)}", reply_markup=InlineKeyboardMarkup(error_keyboard))
+#-------------------------------------------------
 #-------------------------------------------------
 #-------------------------------------------------
 #-------------------------------------------------
