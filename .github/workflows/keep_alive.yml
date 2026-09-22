@@ -1,0 +1,25 @@
+name: Keep Streamlit Awake
+
+on:
+  schedule:
+    - cron: "0 */12 * * *" # اجرا به صورت خودکار هر ۱۲ ساعت
+  workflow_dispatch: # امکان اجرای دستی از داخل پنل گیت‌هاب
+
+jobs:
+  simulate_visit:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Selenium
+        run: pip install selenium
+
+      - name: Run Headless Browser
+        run: python keep_alive.py
