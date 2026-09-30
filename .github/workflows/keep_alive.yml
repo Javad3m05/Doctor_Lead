@@ -2,8 +2,8 @@ name: Keep Streamlit Awake
 
 on:
   schedule:
-    - cron: "0 */12 * * *" # اجرا به صورت خودکار هر ۱۲ ساعت
-  workflow_dispatch: # امکان اجرای دستی از داخل پنل گیت‌هاب
+    - cron: "0 */12 * * *"
+  workflow_dispatch:
 
 jobs:
   simulate_visit:
@@ -18,8 +18,8 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Selenium
-        run: pip install selenium
+      - name: Install Dependencies
+        run: pip install selenium webdriver-manager
 
       - name: Run Headless Browser
         run: python keep_alive.py
