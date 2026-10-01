@@ -11,19 +11,21 @@ def visit_site():
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    # اضافه کردن هویت مرورگر انسانی برای جلوگیری از تشخیص ربات
+    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
     
-    try:
-        print(f"در حال باز کردن {URL} ...")
-        # استفاده از وب‌درایور منیجر برای نصب خودکار درایور در سرور ابری
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=chrome_options)
-        driver.get(URL)
-        
-        time.sleep(10)
-        print("✅ بازدید موفقیت‌آمیز بود و تایمر خواب استریم‌لیت صفر شد.")
-        driver.quit()
-    except Exception as e:
-        print(f"❌ خطا در بازدید: {e}")
+    print(f"در حال باز کردن {URL} ...")
+    
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    
+    driver.get(URL)
+    
+    # ۱۵ ثانیه مکث برای لود شدن کامل کدهای جاوا اسکریپت
+    time.sleep(15)
+    
+    print("✅ صفحه با موفقیت لود شد و تایمر خواب صفر شد.")
+    driver.quit()
 
 if __name__ == "__main__":
     visit_site()
